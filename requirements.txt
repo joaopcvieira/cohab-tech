@@ -1,0 +1,4 @@
+email_to==0.1.0
+pandas==1.4.2
+python-dotenv==0.21.0
+sib_api_v3_sdk==7.5.0
