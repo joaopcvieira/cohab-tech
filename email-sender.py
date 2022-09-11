@@ -41,3 +41,4 @@ print(alunos.head())
 #     print(aluno['pontos-iniciativas-I3-nome'])
 #     print(aluno['pontos-iniciativas-I3-pontos'])
 #     print()
+
