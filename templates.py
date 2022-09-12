@@ -1,36 +1,7 @@
-# aluno = {
-#     'nome': 'João Pedro',
-#     'apelido': 'João',
-#     'turma': 'T25',
-#     'cpf': '123.456.789-00',
-#     'email': 'meuemail@gmail.com',
-#     'ap': {
-#         'numero': '123',
-#         'bloco': 'A',
-#         'vaga': 'D'
-#     },
-#     'pontos': {
-#         'total': 10,
-#         'presenca': 0,
-#         'boletos': 0,
-#         'iniciativas': {
-#             'I1': {
-#                 'nome': 'Iniciativa 1',
-#                 'pontos': 0
-#             },
-#             'I2': {
-#                 'nome': 'Iniciativa 2',
-#                 'pontos': 0                
-#             },
-#             'I3': {
-#                 'nome': 'Iniciativa 3',
-#                 'pontos': 0
-#             },
-#         }
-#     }
-# }
+import pandas as pd
 
-def msg_validacao_pontos(linha):
+
+def msg_validacao_pontos(linha=pd.Series()) -> str:
     validacao_pontos = '''
 <!DOCTYPE html>
 <html>
@@ -38,54 +9,53 @@ def msg_validacao_pontos(linha):
     <base target="_top">
   </head>
   <body>
-   
+
     <h3>Validação dos pontos</h3>
-    
-    <h4>Olá, {linha.nome}! </h4>
-'''
 
-#     <p>Seus pontos foram validados com sucesso! Você apresentou no final, um total de <i>{aluno['pontos']['total']}.</i></p>
-#     <br>
-#     <p>Segue abaixo a divisão e origem dessa pontuação:</p>
-#     <br> '''
-    
-#     if(aluno['pontos']['presenca']):
-#         validacao_pontos += '''
-#     <p>Presença em AG's: {aluno['pontos']['presenca']}</p>'''
-    
-#     if(aluno['pontos']['boletos']):  
-#         validacao_pontos += '''
-#     <p>Boletos pagos: {aluno['pontos']['boletos']}</p>'''
+    <h4>Olá, {nome}! </h4>
 
-#     if(aluno['pontos']['iniciativas']['I1']['pontos']):
-#         validacao_pontos += '''
-#     <h4>Iniciativas </h4>
-#     <p> {aluno['pontos']['iniciativas']['I1']['nome']} <br/>
-#     Correspondentes a um total de {aluno['pontos']['iniciativas']['I1']['pontos']} pontos. </p>'''
+    <p>Seus pontos foram validados com sucesso! Você apresentou no final, um total de <i>{pontos_total} pontos.</i></p>
+    <br>
+    <p>Segue abaixo a divisão e origem dessa pontuação:</p>
+    <br> '''.format(**linha)
 
-#     if(aluno['pontos']['iniciativas']['I2']['pontos']):
-#         validacao_pontos += '''
-#     <p> {aluno['pontos']['iniciativas']['I2']['nome']} <br/>
-#     Correspondentes a um total de {aluno['pontos']['iniciativas']['I2']['pontos']} pontos. </p>'''
+    if(linha.pontos_presenca != 0 and linha.pontos_presenca != None):
+        validacao_pontos += '''
+    <p>Presença em AG's: {pontos_presenca}</p>'''.format(**linha)
 
-#     if(aluno['pontos']['iniciativas']['I3']['pontos']):
-#         validacao_pontos += '''
-#     <p> {aluno['pontos']['iniciativas']['I3']['nome']} <br/>
-#     Correspondentes a um total de {aluno['pontos']['iniciativas']['I3']['pontos']} pontos. </p>'''
+    if(linha.pontos_boletos != 0 and linha.pontos_boletos != None):
+        validacao_pontos += '''
+    <p>Boletos pagos: {pontos_boletos}</p>'''.format(**linha)
+
+    if(linha.pontos_iniciativas_I1_pontos != 0 and linha.pontos_iniciativas_I1_pontos != None):
+        validacao_pontos += '''
+    <h4>Iniciativas </h4>
+    <p> <strong>{pontos_iniciativas_I1_nome}</strong>: <br/>
+    Correspondentes a um total de {pontos_iniciativas_I1_pontos} pontos. </p>'''.format(**linha)
+
+    if(linha.pontos_iniciativas_I2_pontos != 0 and linha.pontos_iniciativas_I2_pontos != None):
+        validacao_pontos += '''
+    <p> <strong>{pontos_iniciativas_I2_nome}</strong>: <br/>
+    Correspondentes a um total de {pontos_iniciativas_I2_pontos} pontos. </p>'''.format(**linha)
+
+    if(linha.pontos_iniciativas_I3_pontos != 0 and linha.pontos_iniciativas_I3_pontos != None):
+        validacao_pontos += '''
+    <p> <strong>{pontos_iniciativas_I3_nome}</strong>: <br/>
+    Correspondentes a um total de {pontos_iniciativas_I3_pontos} pontos. </p>'''.format(**linha)
+
+    validacao_pontos += '''
+    <p>Qualquer dúvida ou sugestão a respeito da validação dos pontos, estamos à disposição,</p>
+
+    <p>Isabel, Begis T-25<br/>
+    Diretora da Cohab.</p>
+
+  </body>
+</html>
+ '''
+    return validacao_pontos
 
 
-#     validacao_pontos +='''
-#     <p>Qualquer dúvida ou sugestão a respeito da validação dos pontos, estamos à disposição,</p>
-
-#     <p>Isabel, Begis T-25<br/>
-#     Diretora da Cohab.</p>
-    
-#   </body>
-# </html>
-# '''
-    return validacao_pontos.format(linha=linha)
-
-def msg_resultado_alocacao(linha):
+def msg_resultado_alocacao(linha = pd.Series()) -> str:
     resultado_alocacao = '''
 <!DOCTYPE html>
 <html>
@@ -96,20 +66,21 @@ def msg_resultado_alocacao(linha):
 
     <h3>Resultado da Postulação</h3>
 
-    <h4>Parabéns, {aluno.name}!</h4>
+    <h4>Parabéns, {nome}!</h4>
 
-    <p>Você conseguiu postular para a vaga {aluno.ap.vaga}, do apartamento {aluno.ap.numero}!</p>
+    <p>Você conseguiu postular para a vaga {ap_vaga}, do apartamento {ap_numero}, bloco {ap_bloco}!</p>
 
     <p> Qualquer dúvida ou sugestão, estamos à disposição,</p>
     <p> Isabel Alencar Tavares Colares Brasil, <br/>
         Diretora da CoHab.</p>
-    
+
 
 </body>
 </html> '''
-    return resultado_alocacao.format(linha=linha)
+    return resultado_alocacao.format(**linha)
 
-def msg_dever_boletos(linha):
+
+def msg_dever_boletos(linha = pd.Series()) -> str:
     dever_boletos = '''
 <!DOCTYPE html>
 <html>
@@ -141,13 +112,46 @@ def msg_dever_boletos(linha):
 				Diretora da COHAB - Casd
 			</strong>
 		</p>
-		
+
 	</body>
 </html>'''
-# .format(NOME=..., VAGAS=..., MESES=...)
+    return dever_boletos.format(**linha)
 
 
 # print(msg_validacao_pontos(aluno))
 
-    print('teste de {nome}'.format(**linha))
-    return msg_validacao_pontos(linha)
+
+
+
+
+# aluno = {
+#     'nome': 'João Pedro',
+#     'apelido': 'João',
+#     'turma': 'T25',
+#     'cpf': '123.456.789-00',
+#     'email': 'meuemail@gmail.com',
+#     'ap': {
+#         'numero': '123',
+#         'bloco': 'A',
+#         'vaga': 'D'
+#     },
+#     'pontos': {
+#         'total': 10,
+#         'presenca': 0,
+#         'boletos': 0,
+#         'iniciativas': {
+#             'I1': {
+#                 'nome': 'Iniciativa 1',
+#                 'pontos': 0
+#             },
+#             'I2': {
+#                 'nome': 'Iniciativa 2',
+#                 'pontos': 0
+#             },
+#             'I3': {
+#                 'nome': 'Iniciativa 3',
+#                 'pontos': 0
+#             },
+#         }
+#     }
+# }
