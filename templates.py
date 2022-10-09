@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-def msg_validacao_pontos(linha=pd.Series()) -> str:
+def msg_validacao_pontos(linha) -> str:
     validacao_pontos = '''
 <!DOCTYPE html>
 <html>
@@ -19,6 +19,10 @@ def msg_validacao_pontos(linha=pd.Series()) -> str:
     <p>Segue abaixo a divisão e origem dessa pontuação:</p>
     <br> '''.format(**linha)
 
+    if(linha.pontos_antigos != 0 and linha.pontos_antigos != None):
+        validacao_pontos += '''
+    <p>Pontuação Anterior ao ano corrente: {pontos_antigos}</p>'''.format(**linha)
+    
     if(linha.pontos_presenca != 0 and linha.pontos_presenca != None):
         validacao_pontos += '''
     <p>Presença em AG's: {pontos_presenca}</p>'''.format(**linha)
@@ -46,7 +50,7 @@ def msg_validacao_pontos(linha=pd.Series()) -> str:
     validacao_pontos += '''
     <p>Qualquer dúvida ou sugestão a respeito da validação dos pontos, estamos à disposição,</p>
 
-    <p>Isabel, Begis T-25<br/>
+    <p>Isabel Brasil, Begis T25<br/>
     Diretora da Cohab.</p>
 
   </body>
@@ -55,7 +59,7 @@ def msg_validacao_pontos(linha=pd.Series()) -> str:
     return validacao_pontos
 
 
-def msg_resultado_alocacao(linha = pd.Series()) -> str:
+def msg_resultado_alocacao(linha) -> str:
     resultado_alocacao = '''
 <!DOCTYPE html>
 <html>
@@ -71,8 +75,8 @@ def msg_resultado_alocacao(linha = pd.Series()) -> str:
     <p>Você conseguiu postular para a vaga {ap_vaga}, do apartamento {ap_numero}, bloco {ap_bloco}!</p>
 
     <p> Qualquer dúvida ou sugestão, estamos à disposição,</p>
-    <p> Isabel Alencar Tavares Colares Brasil, <br/>
-        Diretora da CoHab.</p>
+    <p> Isabel Brasil, Begis T25 <br/>
+        Diretora da Cohab - Casd.</p>
 
 
 </body>
@@ -80,7 +84,7 @@ def msg_resultado_alocacao(linha = pd.Series()) -> str:
     return resultado_alocacao.format(**linha)
 
 
-def msg_dever_boletos(linha = pd.Series()) -> str:
+def msg_dever_boletos(linha) -> str:
     dever_boletos = '''
 <!DOCTYPE html>
 <html>
@@ -90,15 +94,13 @@ def msg_dever_boletos(linha = pd.Series()) -> str:
 	<body>
 		<h4>Olá, {nome}</h4>
 
-		<p>No tocante ao corrente processo de postulação, recebemos o seu pedido de postulação referente às vagas {VAGAS}
-        <!-- $vagas, talvez listadas ... usar um concat e show -->
-        .</p>
+		<p>Recebemos o seu pedido de postulação referente às vagas {VAGAS}</p>
 
-		<p>Entretanto, notamos aqui que você está com pendências em relação ao pagamento da taxa de manutenção do H8, e isso configura um impedimento para a sua participação no processo de escolha de vagas.</p>
+		<p>Entretanto, notamos aqui que você está com <strong>pendências</strong> em relação ao pagamento da taxa de manutenção do H8. Segundo o estatuto XXXXXXXXX, para postular é necessário estar em dia com o pagamento da mensalidade do Casd.</p>
 
 		<p>Constam como não pagos os boletos referentes à {MESES}.</p>
 
-		<p>Orientamos que você entre em contato com o Financeiro do Casd, seja através do WhatsApp do Financeiro (12)98142-6646 - (Sheyla), ou se dirigindo até a Sala do Casd para que acerte as suas pendências e dê seguimento ao processo de postulação.</p>
+		<p>Orientamos que você entre em contato com o Financeiro do Casd, seja através do WhatsApp do Financeiro (12)98142-6646 - (Sheyla), ou se dirigindo até a sala do Casd para que acerte as suas pendências e dê seguimento ao processo de postulação.</p>
 
 		<p>O <strong>prazo final</strong> para a resolução das pendências, mantendo o requerimento de postulação, é: <strong>***<!--PRAZO--></strong>.</p>
 
@@ -107,21 +109,13 @@ def msg_dever_boletos(linha = pd.Series()) -> str:
 		<p>Qualquer dúvida ou sugestão, estamos à disposição,</p>
 
 		<p>
-			<strong>
-				Isabel Brasil,<br/>
-				Diretora da COHAB - Casd
-			</strong>
+				Isabel Brasil, Begis T25<br>
+				Diretora da Cohab - Casd
 		</p>
 
 	</body>
 </html>'''
     return dever_boletos.format(**linha)
-
-
-# print(msg_validacao_pontos(aluno))
-
-
-
 
 
 # aluno = {
