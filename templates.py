@@ -76,7 +76,7 @@ def msg_resultado_alocacao(linha) -> str:
 
     <p> Qualquer dúvida ou sugestão, estamos à disposição,</p>
     <p> Isabel Brasil, Begis T25 <br/>
-        Diretora da Cohab - Casd.</p>
+        Diretora da CoHab - Casd.</p>
 
 
 </body>
@@ -94,17 +94,17 @@ def msg_dever_boletos(linha) -> str:
 	<body>
 		<h4>Olá, {nome}</h4>
 
-		<p>Recebemos o seu pedido de postulação referente às vagas {VAGAS}</p>
+		<p>Recebemos o seu pedido de postulação.</p>
 
-		<p>Entretanto, notamos aqui que você está com <strong>pendências</strong> em relação ao pagamento da taxa de manutenção do H8. Segundo o estatuto XXXXXXXXX, para postular é necessário estar em dia com o pagamento da mensalidade do Casd.</p>
+		<p>Entretanto, notamos aqui que você está com <strong>pendências</strong> em relação ao pagamento da taxa de manutenção do H8. Segundo o regimento interno da CoHab, para postular é necessário estar em dia com o pagamento da mensalidade do Casd.</p>
 
-		<p>Constam como não pagos os boletos referentes à {MESES}.</p>
+		<p>Constam como não pagos os boletos referentes à {devendo_meses}.</p>
 
 		<p>Orientamos que você entre em contato com o Financeiro do Casd, seja através do WhatsApp do Financeiro (12)98142-6646 - (Sheyla), ou se dirigindo até a sala do Casd para que acerte as suas pendências e dê seguimento ao processo de postulação.</p>
 
 		<p>O <strong>prazo final</strong> para a resolução das pendências, mantendo o requerimento de postulação, é: <strong>***<!--PRAZO--></strong>.</p>
 
-		<p>Ressaltamos ainda que o pagamento da taxa de manutenção, previsto na NPA ***<!--Npa de moradia...-->, é de suma importância para a realização de obras e projetos no H8, então mesmo que tenha mudado de ideia e não queira dar prosseguimento à postulação, realize o pagamento mesmo assim.</p>
+		<p>Ressaltamos ainda que o pagamento da taxa de manutenção, previsto na NPA 045<!--Npa de moradia...-->, é de suma importância para a realização de obras e projetos no H8, então mesmo que tenha mudado de ideia e não queira dar prosseguimento à postulação, realize o pagamento mesmo assim.</p>
 
 		<p>Qualquer dúvida ou sugestão, estamos à disposição,</p>
 
@@ -116,36 +116,3 @@ def msg_dever_boletos(linha) -> str:
 	</body>
 </html>'''
     return dever_boletos.format(**linha)
-
-
-# aluno = {
-#     'nome': 'João Pedro',
-#     'apelido': 'João',
-#     'turma': 'T25',
-#     'cpf': '123.456.789-00',
-#     'email': 'meuemail@gmail.com',
-#     'ap': {
-#         'numero': '123',
-#         'bloco': 'A',
-#         'vaga': 'D'
-#     },
-#     'pontos': {
-#         'total': 10,
-#         'presenca': 0,
-#         'boletos': 0,
-#         'iniciativas': {
-#             'I1': {
-#                 'nome': 'Iniciativa 1',
-#                 'pontos': 0
-#             },
-#             'I2': {
-#                 'nome': 'Iniciativa 2',
-#                 'pontos': 0
-#             },
-#             'I3': {
-#                 'nome': 'Iniciativa 3',
-#                 'pontos': 0
-#             },
-#         }
-#     }
-# }
