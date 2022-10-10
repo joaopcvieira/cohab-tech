@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 def msg_validacao_pontos(linha) -> str:
     validacao_pontos = '''
 <!DOCTYPE html>
@@ -98,7 +97,7 @@ def msg_dever_boletos(linha) -> str:
 
 		<p>Entretanto, notamos aqui que você está com <strong>pendências</strong> em relação ao pagamento da taxa de manutenção do H8. Segundo o regimento interno da CoHab, para postular é necessário estar em dia com o pagamento da mensalidade do Casd.</p>
 
-		<p>Constam como não pagos os boletos referentes à {devendo_meses}.</p>
+		<p>Constam como não pagos os boletos referentes à {meses_devendo}.</p>
 
 		<p>Orientamos que você entre em contato com o Financeiro do Casd, seja através do WhatsApp do Financeiro (12)98142-6646 - (Sheyla), ou se dirigindo até a sala do Casd para que acerte as suas pendências e dê seguimento ao processo de postulação.</p>
 
