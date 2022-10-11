@@ -2,3 +2,5 @@ __pycache__/
 learning/*
 credentials.json
 *.csv
+*.exe
+.env
