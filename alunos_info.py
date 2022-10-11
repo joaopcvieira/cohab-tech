@@ -30,49 +30,65 @@ def get_students_info() -> pd.DataFrame:
                 'apelido',
                 'turma',
                 'cpf',
-                'email',
+                'celular', 'email',
                 'ap_bloco', 'ap_numero', 'ap_vaga',
                 'pontos_total', 'pontos_antigos', 'pontos_presenca', 'pontos_boletos',
                 'pontos_iniciativas_I1_nome', 'pontos_iniciativas_I1_pontos',
                 'pontos_iniciativas_I2_nome', 'pontos_iniciativas_I2_pontos',
                 'pontos_iniciativas_I3_nome', 'pontos_iniciativas_I3_pontos',
                 ]
-    alunos = pd.DataFrame(columns=atributos, data=ws.get("A2:R"))
+    alunos = pd.DataFrame(columns=atributos, data=ws.get("A2:S"))
     
    
     nomes_alunos_presentes = alunos_presentes_nas_ags().nome.apply(remove_accents_and_special_characters).values
     alunos['pontos_presenca'] = [1 if nome in nomes_alunos_presentes else 0 for nome in alunos.nome.apply(remove_accents_and_special_characters).values]
 
     alunos_devendo_boletos = boletos_infos().nome.apply(remove_accents_and_special_characters).values
-    alunos['devendo_boletos'] = [devendo if nome in alunos_devendo_boletos else '' for devendo, nome in zip(boletos_infos().meses_devendo.values, alunos.nome.apply(remove_accents_and_special_characters).values)]
-    # print(alunos.head())
+    alunos['meses_devendo'] = [devendo if nome in alunos_devendo_boletos else '' for devendo, nome in zip(boletos_infos().meses_devendo.values, alunos.nome.apply(remove_accents_and_special_characters).values)]
 
-    alunos['pontos_boletos'] = [0.5 if devendo == '' else 0 for devendo in alunos.devendo_boletos.values]
+    alunos['pontos_boletos'] = [0.5 if devendo == '' else 0 for devendo in alunos.meses_devendo.values]
 
 
     pontos_total = []
     for idx, linha in alunos.iterrows():
         pt = 2
-        print(linha.nome)
-        if linha.pontos_antigos != '': # or linha.pontos_antigos.notnull():
+        # if linha.pontos_antigos != '': # or linha.pontos_antigos.notnull():
+        try:
             pt += float(linha.pontos_antigos)
-        if linha.pontos_boletos != '': # or linha.pontos_boletos.notnull():
+        except:
+            pass
+        # if linha.pontos_boletos != '': # or linha.pontos_boletos.notnull():
+        try:
             pt += float(linha.pontos_boletos)
-        if linha.pontos_presenca != '': # or linha.pontos_presenca.notnull():
+        except:
+            pass
+        # if linha.pontos_presenca != '': # or linha.pontos_presenca.notnull():
+        try:
             pt += float(linha.pontos_presenca)
-        if linha.pontos_iniciativas_I1_pontos != '': # or linha.pontos_iniciativas_I1_pontos.notnull():
+        except:
+            pass
+        # if linha.pontos_iniciativas_I1_pontos != '': # or linha.pontos_iniciativas_I1_pontos.notnull():
+        try:
             pt += float(linha.pontos_iniciativas_I1_pontos)
-        if linha.pontos_iniciativas_I2_pontos != '': # or linha.pontos_iniciativas_I2_pontos.notnull():
+        except:
+            pass
+        # if linha.pontos_iniciativas_I2_pontos != '': # or linha.pontos_iniciativas_I2_pontos.notnull():
+        try:
             pt += float(linha.pontos_iniciativas_I2_pontos)
-        if linha.pontos_iniciativas_I3_pontos != '': # or linha.pontos_iniciativas_I3_pontos.notnull():
+        except:
+            pass
+        # if linha.pontos_iniciativas_I3_pontos != '': # or linha.pontos_iniciativas_I3_pontos.notnull():
+        try:
             pt += float(linha.pontos_iniciativas_I3_pontos)
+        except:
+            pass
 
         pontos_total.append(pt)
     
     alunos['pontos_total'] = pontos_total
     return alunos
 
-print(get_students_info().head(10))
+# print(get_students_info().columns)
 
 
 
