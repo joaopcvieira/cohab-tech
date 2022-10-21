@@ -91,4 +91,3 @@ def get_students_info() -> pd.DataFrame:
 # print(get_students_info().columns)
 
 
-
