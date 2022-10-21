@@ -4,3 +4,4 @@ credentials.json
 *.csv
 *.exe
 .env
+*.txt
