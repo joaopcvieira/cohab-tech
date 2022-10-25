@@ -44,8 +44,7 @@ Segue abaixo a divisão e origem dessa pontuação: '''.format(**linha)
     validacao_pontos += '''
     Qualquer dúvida ou sugestão a respeito da validação dos pontos, estamos à disposição,
 
-    Isabel Brasil, Begis T25
-    Diretora da Cohab.
+    Comissão de Habitação (CoHab).
  '''
     return validacao_pontos
 
@@ -59,8 +58,7 @@ Você conseguiu postular para a *vaga {ap_vaga}, do apartamento {ap_numero}, blo
 
 Qualquer dúvida ou sugestão, estamos à disposição,
 
-Isabel Brasil, Begis T25
-Diretora da CoHab - Casd.
+Comissão de Habitação (CoHab).
 '''
     return resultado_alocacao.format(**linha)
 
@@ -86,8 +84,8 @@ Ressaltamos ainda que o pagamento da taxa de manutenção, previsto na NPA 045, 
 Qualquer dúvida ou sugestão, estamos à disposição,
 
 
-    Isabel Brasil, Begis T25
-    Diretora da Cohab - Casd
+   
+    Comissão de Habitação (CoHab).
 	'''
     return dever_boletos.format(**linha)
 
@@ -140,8 +138,7 @@ def msg_validacao_pontos_html(linha) -> str:
     validacao_pontos += '''
     <p>Qualquer dúvida ou sugestão a respeito da validação dos pontos, estamos à disposição,</p>
 
-    <p>Isabel Brasil, Begis T25<br/>
-    Diretora da Cohab.</p>
+    <p>Comissão de Habitação (CoHab).</p>
 
   </body>
 </html>
@@ -165,8 +162,7 @@ def msg_resultado_alocacao_html(linha) -> str:
     <p>Você conseguiu postular para a vaga {ap_vaga}, do apartamento {ap_numero}, bloco {ap_bloco}!</p>
 
     <p> Qualquer dúvida ou sugestão, estamos à disposição,</p>
-    <p> Isabel Brasil, Begis T25 <br/>
-        Diretora da CoHab - Casd.</p>
+    <p> Comissão de Habitação (CoHab).</p>
 
 
 </body>
@@ -199,8 +195,8 @@ def msg_dever_boletos_html(linha) -> str:
 		<p>Qualquer dúvida ou sugestão, estamos à disposição,</p>
 
 		<p>
-				Isabel Brasil, Begis T25<br>
-				Diretora da Cohab - Casd
+				
+				Comissão de Habitação (CoHab).
 		</p>
 
 	</body>
