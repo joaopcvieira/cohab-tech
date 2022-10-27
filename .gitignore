@@ -5,3 +5,4 @@ credentials.json
 *.exe
 .env
 *.txt
+*.ipynb
