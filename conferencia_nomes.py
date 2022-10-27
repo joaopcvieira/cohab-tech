@@ -1,12 +1,11 @@
-# %%
 import gspread
 import pandas as pd
 import re
+from fuzzywuzzy import process
 
 sa = gspread.service_account(filename='credentials.json')
-# sh = sa.open("Home Broker")
-# ws = sh.worksheet("nomes")
 
+# acessa os nomes na planilha atual da cohab
 nomes_cohab = pd.DataFrame(
     sa.open(
         "H8 - 2022.1"
@@ -23,6 +22,7 @@ nomes_cohab = pd.DataFrame(
         'turma_cohab'
     ]).dropna(subset=['turma_cohab']).fillna('-empty-')
 
+# acessa os nomes na planilha atual do financeiro
 nomes_financeiro = pd.DataFrame(
     sa.open(
         "Cópia de Controle Mensalidade - Base de dados"
@@ -38,9 +38,14 @@ nomes_financeiro = pd.DataFrame(
         'apelido_financeiro'
     ]).dropna(subset=['nome_financeiro']).fillna('-empty-')
 
-
-# %%
+## Funções relevantes
 def remove_accents_and_special_characters(word):
+    """
+    It removes accents and special characters from a word
+    
+    :param word: The word to be processed
+    :return: A string with all the accents and special characters removed.
+    """
     word = word.lower().strip(' ')
     word = re.sub(pattern=r'[àáâãäå]', repl='a', string=word)
     word = re.sub(pattern=r'[èéêë]', repl='e', string=word)
@@ -54,6 +59,13 @@ def remove_accents_and_special_characters(word):
     return word
 
 def fix_cpf(cpf):
+    """
+    It takes a cpf, removes all the dots, dashes, and spaces, and then adds a zero 
+    to the front if it's missing
+    
+    :param cpf: The CPF number you want to validate
+    :return: the cpf variable.
+    """
     cpf = str(cpf)
     cpf = cpf.replace('.', '').replace('-', '').replace(' ', '')
     if(len(cpf) == 11):
@@ -64,22 +76,12 @@ def fix_cpf(cpf):
         return "ERRO CPF INVALIDO"
 
 
-
+# Removing accents and special characters from the names and cpf's.
 nomes_cohab['nome_cohab'] = nomes_cohab.nome_cohab.apply(remove_accents_and_special_characters).sort_values()
 nomes_financeiro['nome_financeiro'] = nomes_financeiro.nome_financeiro.apply(remove_accents_and_special_characters)
 nomes_financeiro['cpf_financeiro'] = nomes_financeiro.cpf_financeiro.apply(fix_cpf)
 
-# %%
-qtd_nomes_diferentes = 0
-for idx, linha in nomes_cohab.iterrows():
-    if linha.nome_cohab not in nomes_financeiro.nome_financeiro.values:
-        # print(linha.nome_cohab)
-        qtd_nomes_diferentes += 1
 
-print(qtd_nomes_diferentes)
-
-# %%
-from fuzzywuzzy import process
 
 nome_financeiro_achado = list()
 cpf_finaceiro_achado = list()
@@ -87,6 +89,13 @@ apelido_financeiro_achado = list()
 turma_financeiro_achado = list()
 ratio = list()
 
+# Iterating over the rows of the dataframe `nomes_cohab` and checking if the name of the row is in the
+# `nomes_financeiro` dataframe. If it is, it appends the name, cpf, nickname, and class to the lists
+# `nome_financeiro_achado`, `cpf_finaceiro_achado`, `apelido_financeiro_achado`, and
+# `turma_financeiro_achado`, respectively. If it is not, it uses the `process.extractOne` function to
+# find the closest match and then appends the name, cpf, nickname, and class to the lists
+# `nome_financeiro_achado`, `cpf_finaceiro_achado`, `apelido_financeiro_achado`, and
+# `turma_financeiro_achado`, respectively.
 for idx, linha in nomes_cohab.iterrows():
     if linha.nome_cohab in nomes_financeiro.nome_financeiro.values:
         nome_financeiro_achado.append("")
@@ -113,6 +122,8 @@ for idx, linha in nomes_cohab.iterrows():
         apelido_financeiro_achado.append(apelido_achado)
         turma_financeiro_achado.append(turma_achado)
 
+# Adding the columns `nome_financeiro`, `cpf_financeiro`, `apelido_financeiro`, `turma_financeiro`,
+# and `ratio` to the dataframe `nomes_cohab`.
 nomes_cohab['nome_financeiro'] = nome_financeiro_achado
 nomes_cohab['cpf_financeiro'] = cpf_finaceiro_achado
 nomes_cohab['apelido_financeiro'] = apelido_financeiro_achado
@@ -120,11 +131,6 @@ nomes_cohab['turma_financeiro'] = turma_financeiro_achado
 nomes_cohab['ratio'] = ratio
 
 
-# %%
 # send df to google sheets
 sa.open("Nomes Cohab X Financeiro").worksheet("nomes").update([nomes_cohab.columns.values.tolist()] + nomes_cohab.values.tolist())
-
-# %%
-
-
 
