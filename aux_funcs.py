@@ -60,6 +60,25 @@ def fix_number(number):
     return number
 
 
+def fix_cel(cel):
+    """
+    It takes a string, removes all the parenthesis, dashes, and spaces, and then checks to see if the
+    length of the string is 10 or 11. If it is, it returns the string. If it's not, it returns an error
+    message
+
+    :param cel: The cell phone number
+    :return: the fixed cell phone number.
+    """
+    cel = str(cel)
+    cel = cel.replace('(', '').replace(')', '').replace(
+        '-', '').replace(' ', '')
+    if(len(cel) == 11):
+        return cel
+    elif(len(cel) == 10):
+        return cel
+    else:
+        return "ERRO CEL INVALIDO"
+
 
 def is_name_in_list(name: str, names_list: list, certainty=CERTAINTY) -> tuple:
     """
@@ -89,7 +108,7 @@ def is_name_in_list(name: str, names_list: list, certainty=CERTAINTY) -> tuple:
     # return [False, ""]
 
 
-def is_name_equivalent(name1: str, name2: str, certainty=CERTAINTY) -> tuple:
+def is_name_equivalent(name1 = "", name2 = "", certainty=CERTAINTY) -> tuple:
     """
     It checks if the name1 is equivalent to name2
 
