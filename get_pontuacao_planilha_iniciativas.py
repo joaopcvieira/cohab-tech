@@ -2,6 +2,7 @@ import pandas as pd
 import gspread
 import aux_funcs as aux
 import numpy as np
+import time
 
 ## Pipeline:
 # 1) Acessa todas as abas da planilha colocando os nomes das pessoas com a iniciativa e a pontuação
@@ -12,7 +13,7 @@ import numpy as np
 sa = gspread.service_account(filename='credentials.json')
 sh = sa.open("Controle de Efetivo das Iniciativas 2022.2")
 
-names = ['CR26', 'AAAITA', 'Aerodesign', 'AGITA',
+names = ['AAAITA', 'Aerodesign', 'AGITA',
          'ABU', 'CASD - Curso', 'Carniceria',
          'CEE', 'DepCult', 'eVTOL', 'Formula ITA',
          'ITA Baja', 'ITA Finance', 'ITA Jr', 'ITA Bits',
@@ -23,8 +24,11 @@ names = ['CR26', 'AAAITA', 'Aerodesign', 'AGITA',
 
 sum = pd.DataFrame(columns=['nome', 'apelido', 'iniciativa', 'pontuacao'])
 
+
+
 for sheet in names:
     ws = sh.worksheet(sheet)
+    time.sleep(1)
     sheet_df = pd.DataFrame(ws.get("A6:H"), columns=ws.get("A5:H5")[
                             0]).dropna(subset=['Nome'])
 
@@ -48,9 +52,26 @@ sum.dropna(subset=['pontuacao'], inplace=True)
 sum = sum.loc[sum.pontuacao > 0]
 sum.sort_values(by=['nome', 'pontuacao'], ascending=False, inplace=True)
 sum.reset_index(inplace=True, drop=True)
+sum.pontuacao = sum.pontuacao.astype(float)
 
-sum = sum.loc[sum.nome != 'a']
+sum = sum.sort_values(by='pontuacao', ascending=False).reset_index(drop=True)
 
+
+not_described_sum = sum.groupby('apelido').agg(
+    {'nome': ', '.join, 'iniciativa': ','.join, 'pontuacao': 'sum'}).sort_values(by='nome', ascending=False)
+not_described_sum.reset_index(inplace=True)
+not_described_sum.sort_values(by='apelido', ascending=True, inplace=True)
+
+
+ws = sh.worksheet('not_described')
+ws.clear()
+
+i = 2
+ws.update('A1', 'Soma de pontos por iniciativa, não descrita por iniciativa')
+ws.update(f"B{i}:E", [
+          not_described_sum.columns.values.tolist()] + not_described_sum.values.tolist())
+
+ws.update("G3", '=ArrayFormula(SPLIT(C3:C;","))', raw=False)
 
 cols_summary = [
     'nome', 'apelido',
@@ -65,45 +86,10 @@ cols_summary = [
 df_summary_iniciativas = pd.DataFrame(columns=cols_summary)
 df_summary_iniciativas
 
-
-cols = ['nome', 'apelido', 'turma',
-        'cpf', 'celular', 'email',
-        'ap_bloco', 'ap_numero', 'ap_vaga',
-        'pontos_total', 'pontos_antigos', 'pontos_presenca',
-        'pontos_boletos',
-        'pontos_iniciativas_I1_nome',
-        'pontos_iniciativas_I1_pontos',
-        'pontos_iniciativas_I2_nome',
-        'pontos_iniciativas_I2_pontos',
-        'pontos_iniciativas_I3_nome',
-        'pontos_iniciativas_I3_pontos']
-
-df_alunos_final = pd.DataFrame(columns=cols)
-
-sum
-
-
-not_described_sum = sum.groupby('apelido').agg(
-    {'nome': ', '.join, 'iniciativa': ', '.join, 'pontuacao': 'sum'}).sort_values(by='nome', ascending=False)
-not_described_sum.reset_index(inplace=True)
-not_described_sum.sort_values(by='apelido', ascending=True, inplace=True)
-
-
-ws = sh.worksheet('not_described')
-ws.clear()
-
-i = 2
-ws.update('A1', 'Soma de pontos por iniciativa, não descrita por iniciativa')
-ws.update(f"B{i}:E{not_described_sum.shape[0] + i}", [
-          not_described_sum.columns.values.tolist()] + not_described_sum.values.tolist())
-
-
-sum = sum.sort_values(by='pontuacao', ascending=False).reset_index(drop=True)
-
 for idx, linha in sum.iterrows():
-    df_summary_iniciativas.pontos_iniciativas_I1_pontos.apply(aux.fix_number)
-    df_summary_iniciativas.pontos_iniciativas_I2_pontos.apply(aux.fix_number)
-    df_summary_iniciativas.pontos_iniciativas_I3_pontos.apply(aux.fix_number)
+    df_summary_iniciativas.pontos_iniciativas_I1_pontos.apply(aux.fix_number).astype(float)
+    df_summary_iniciativas.pontos_iniciativas_I2_pontos.apply(aux.fix_number).astype(float)
+    df_summary_iniciativas.pontos_iniciativas_I3_pontos.apply(aux.fix_number).astype(float)
 
     if df_summary_iniciativas.shape[0] > 0:
         nomes_ja_inseridos = df_summary_iniciativas['nome'].to_list()
@@ -119,8 +105,8 @@ for idx, linha in sum.iterrows():
             linha['apelido'], apelidos_ja_inseridos)[1]
         # print(best_option)
 
-        if df_summary_iniciativas.loc[(df_summary_iniciativas.apelido == best_option), 'pontos_iniciativas_I3_pontos'].values[0] > 0:
-            # check wether the new iniciative has more points than the ones before
+        if df_summary_iniciativas.loc[(df_summary_iniciativas.apelido == best_option), 'pontos_iniciativas_I3_pontos'].values[0] != 0:
+            # check wether the new iniciative has more points then the ones before
             # if so, change it
             pontos = df_summary_iniciativas.loc[(df_summary_iniciativas.apelido == best_option),
                                                 ['pontos_iniciativas_I1_pontos', 'pontos_iniciativas_I2_pontos',
@@ -128,8 +114,8 @@ for idx, linha in sum.iterrows():
                                                 ].values[0]
 
             if 0 in pontos or linha.pontuacao > max(pontos):
-                i = np.argmin(pontos) + 1
-                col = f'pontos_iniciativas_I{i}_'
+                i = np.argmin(pontos) 
+                col = f'pontos_iniciativas_I{i + 1}_'
                 df_summary_iniciativas.loc[(
                     df_summary_iniciativas.apelido == best_option), col + 'nome'] = linha.iniciativa
                 df_summary_iniciativas.loc[(
@@ -139,7 +125,7 @@ for idx, linha in sum.iterrows():
                 print(
                     f"COROI, cara gagazeiro o {linha.apelido}, na iniciativa {linha.iniciativa} tem {linha.pontuacao} pontos")
 
-        elif df_summary_iniciativas.loc[(df_summary_iniciativas.apelido == best_option), 'pontos_iniciativas_I2_pontos'].values[0] != "":
+        elif df_summary_iniciativas.loc[(df_summary_iniciativas.apelido == best_option), 'pontos_iniciativas_I2_pontos'].values[0] != 0:
             df_summary_iniciativas.loc[(df_summary_iniciativas.apelido == best_option),
                                        'pontos_iniciativas_I3_nome'] = linha['iniciativa']
             df_summary_iniciativas.loc[(df_summary_iniciativas.apelido == best_option),
@@ -163,11 +149,13 @@ for idx, linha in sum.iterrows():
                 'pontos_iniciativas_I3_nome': "",
                 'pontos_iniciativas_I3_pontos': 0
             }, index=[0])], ignore_index=True)
+    df_summary_iniciativas.pontos_iniciativas_I1_pontos.apply(aux.fix_number).astype(float)
+    df_summary_iniciativas.pontos_iniciativas_I2_pontos.apply(aux.fix_number).astype(float)
+    df_summary_iniciativas.pontos_iniciativas_I3_pontos.apply(aux.fix_number).astype(float)
 
 
 df_summary_iniciativas.sort_values(by='nome', ascending=False, inplace=True)
 df_summary_iniciativas.reset_index(inplace=True, drop=True)
-df_summary_iniciativas
 
 
 df_summary_iniciativas.replace(to_replace=0, value='', inplace=True)
@@ -179,8 +167,5 @@ export.clear()
 
 i = 2
 export.update('A1', 'Soma de pontos por iniciativa,  Dividida por iniciativa')
-export.update(f"B{i}:I{not_described_sum.shape[0] + i}", [
+export.update(f"B{i}:I", [
               df_summary_iniciativas.columns.values.tolist()] + df_summary_iniciativas.values.tolist())
-
-
-df_summary_iniciativas
