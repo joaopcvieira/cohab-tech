@@ -84,7 +84,7 @@ cols_summary = [
 
 
 df_summary_iniciativas = pd.DataFrame(columns=cols_summary)
-df_summary_iniciativas
+# df_summary_iniciativas
 
 for idx, linha in sum.iterrows():
     df_summary_iniciativas.pontos_iniciativas_I1_pontos.apply(aux.fix_number).astype(float)
