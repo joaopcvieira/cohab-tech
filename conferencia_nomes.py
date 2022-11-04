@@ -2,6 +2,7 @@ import gspread
 import pandas as pd
 import re
 from fuzzywuzzy import process
+import aux_funcs as aux
 
 sa = gspread.service_account(filename='credentials.json')
 
@@ -27,60 +28,25 @@ nomes_financeiro = pd.DataFrame(
     sa.open(
         "Cópia de Controle Mensalidade - Base de dados"
     ).worksheet(
-        "Import_Range_Planilha_Financeiro_Casd"
-    ).get("M5:Q"),
+        "export_python"
+    ).get("A2:E"),
 
     columns=[
-        'cpf_financeiro',
         'nome_financeiro',
         'turma_financeiro',
         'email_financeiro',
-        'apelido_financeiro'
+        'apelido_financeiro',
+        'cpf_financeiro'
     ]).dropna(subset=['nome_financeiro']).fillna('-empty-')
-
-## Funções relevantes
-def remove_accents_and_special_characters(word):
-    """
-    It removes accents and special characters from a word
-    
-    :param word: The word to be processed
-    :return: A string with all the accents and special characters removed.
-    """
-    word = word.lower().strip(' ')
-    word = re.sub(pattern=r'[àáâãäå]', repl='a', string=word)
-    word = re.sub(pattern=r'[èéêë]', repl='e', string=word)
-    word = re.sub(pattern=r'[ìíîï]', repl='i', string=word)
-    word = re.sub(pattern=r'[òóôõö]', repl='o', string=word)
-    word = re.sub(pattern=r'[ùúûü]', repl='u', string=word)
-    word = re.sub(
-        # Remove anything that is not a word or digit
-        pattern=r'[^a-zA-Z0-9\s]', repl='', string=word
-    )
-    return word
-
-def fix_cpf(cpf):
-    """
-    It takes a cpf, removes all the dots, dashes, and spaces, and then adds a zero 
-    to the front if it's missing
-    
-    :param cpf: The CPF number you want to validate
-    :return: the cpf variable.
-    """
-    cpf = str(cpf)
-    cpf = cpf.replace('.', '').replace('-', '').replace(' ', '')
-    if(len(cpf) == 11):
-        return cpf
-    elif(len(cpf) == 10):
-        return '0' + cpf
-    else:
-        return "ERRO CPF INVALIDO"
 
 
 # Removing accents and special characters from the names and cpf's.
-nomes_cohab['nome_cohab'] = nomes_cohab.nome_cohab.apply(remove_accents_and_special_characters).sort_values()
-nomes_financeiro['nome_financeiro'] = nomes_financeiro.nome_financeiro.apply(remove_accents_and_special_characters)
-nomes_financeiro['cpf_financeiro'] = nomes_financeiro.cpf_financeiro.apply(fix_cpf)
-
+nomes_cohab['nome_cohab'] = nomes_cohab.nome_cohab.apply(
+    aux.remove_accents_and_special_characters).sort_values()
+nomes_financeiro['nome_financeiro'] = nomes_financeiro.nome_financeiro.apply(
+    aux.remove_accents_and_special_characters)
+nomes_financeiro['cpf_financeiro'] = nomes_financeiro.cpf_financeiro.apply(
+    aux.fix_cpf)
 
 
 nome_financeiro_achado = list()
@@ -108,11 +74,11 @@ for idx, linha in nomes_cohab.iterrows():
         nome_achado = process.extractOne(
             linha.nome_cohab, nomes_financeiro.nome_financeiro.values)
         ratio.append(nome_achado[1])
-        [cpf_achado,
-         nome_achado,
-         turma_achado,
-         email_achado,
-         apelido_achado
+        [nome_achado,
+            turma_achado,
+            email_achado,
+            apelido_achado,
+            cpf_achado
          ] = nomes_financeiro.loc[
             nomes_financeiro.nome_financeiro ==
             nome_achado[0]].values[0]
@@ -132,5 +98,6 @@ nomes_cohab['ratio'] = ratio
 
 
 # send df to google sheets
-sa.open("Nomes Cohab X Financeiro").worksheet("nomes").update([nomes_cohab.columns.values.tolist()] + nomes_cohab.values.tolist())
-
+status = sa.open("Nomes Cohab X Financeiro").worksheet("nomes").update(
+    [nomes_cohab.columns.values.tolist()] + nomes_cohab.values.tolist())
+print(status)
