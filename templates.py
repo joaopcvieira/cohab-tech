@@ -1,5 +1,7 @@
 import pandas as pd
 
+DATA_MAX_BOLETOS = '08/11/2022'
+
 def msg_validacao_pontos_wpp(linha) -> str:
     validacao_pontos = '''
 *Postulação 2022*
@@ -41,6 +43,10 @@ Segue abaixo a divisão e origem dessa pontuação: '''.format(**linha)
     *{pontos_iniciativas_I3_nome}*:
     Correspondentes a um total de _{pontos_iniciativas_I3_pontos} pontos._'''.format(**linha)
 
+    if(linha.pontos_extra != 0 and linha.pontos_extra != None):
+        validacao_pontos += '''
+        Pontuação Extra: {pontos_extra} pontos.'''.format(**linha)
+
     validacao_pontos += '''
     Qualquer dúvida ou sugestão a respeito da validação dos pontos, estamos à disposição,
 
@@ -70,24 +76,23 @@ def msg_dever_boletos_wpp(linha) -> str:
 *Olá, {nome}!*
 
 Recebemos o seu pedido de postulação.
-
 Entretanto, notamos aqui que você está com *pendências* em relação ao pagamento da taxa de manutenção do H8. Segundo o regimento interno da CoHab, para postular é necessário estar em dia com o pagamento da mensalidade do Casd.
+Constam como não pagos os boletos referentes à 
 
-Constam como não pagos os boletos referentes à {meses_devendo}.
+    {meses_devendo}.'''.format(**linha)
+    dever_boletos+='''
+    
+Orientamos que você entre em contato com o Financeiro do Casd, seja através do WhatsApp do Financeiro (12) 98142-6646 (Sheyla), ou se dirigindo até a sala do Casd para que acerte as suas pendências e dê seguimento ao processo de postulação.
 
-Orientamos que você entre em contato com o Financeiro do Casd, seja através do WhatsApp do Financeiro (12) 98142-6646  (Sheyla), ou se dirigindo até a sala do Casd para que acerte as suas pendências e dê seguimento ao processo de postulação.
-
-O *prazo final* para a resolução das pendências, mantendo o requerimento de postulação, é: *07/11/2022*.
-
+O *prazo final* para a resolução das pendências, mantendo o requerimento de postulação, é: *{data}*.
 Ressaltamos ainda que o pagamento da taxa de manutenção, previsto na NPA 045, é de suma importância para a realização de obras e projetos no H8, então mesmo que tenha mudado de ideia e não queira dar prosseguimento à postulação, realize o pagamento mesmo assim.
-
 Qualquer dúvida ou sugestão, estamos à disposição,
 
 
    
     Comissão de Habitação (CoHab).
-	'''
-    return dever_boletos.format(**linha)
+	'''.format(data=DATA_MAX_BOLETOS)
+    return dever_boletos
 
 def msg_validacao_pontos_sheets(linha) -> str:
     validacao_pontos = '''
@@ -130,6 +135,10 @@ Segue abaixo a divisão e origem dessa pontuação: '''.format(**linha)
     {pontos_iniciativas_I3_nome}:
     Correspondentes a um total de {pontos_iniciativas_I3_pontos} pontos.'''.format(**linha)
 
+    if(linha.pontos_extra != 0 and linha.pontos_extra != None):
+        validacao_pontos += '''
+        Pontuação Extra: {pontos_extra} pontos.'''.format(**linha)
+
     validacao_pontos += '''
     Qualquer dúvida ou sugestão a respeito da validação dos pontos, estamos à disposição,
 
@@ -159,23 +168,21 @@ Postulação 2022
 Olá, {nome}!
 
 Recebemos o seu pedido de postulação.
-
 Entretanto, notamos aqui que você está com pendências em relação ao pagamento da taxa de manutenção do H8. Segundo o regimento interno da CoHab, para postular é necessário estar em dia com o pagamento da mensalidade do Casd.
-
-Constam como não pagos os boletos referentes à {meses_devendo}.
+Constam como não pagos os boletos referentes à 
+    {meses_devendo}.'''.format(**linha)
+    dever_boletos+='''
 
 Orientamos que você entre em contato com o Financeiro do Casd, seja através do WhatsApp do Financeiro (12) 98142-6646 (Sheyla), ou se dirigindo até a sala do Casd para que acerte as suas pendências e dê seguimento ao processo de postulação.
-
-O prazo final para a resolução das pendências, mantendo o requerimento de postulação, é: 07/11/2022.
+O prazo final para a resolução das pendências, mantendo o requerimento de postulação, é: {data}.
 
 Ressaltamos ainda que o pagamento da taxa de manutenção, previsto na NPA 045, é de suma importância para a realização de obras e projetos no H8, então mesmo que tenha mudado de ideia e não queira dar prosseguimento à postulação, realize o pagamento mesmo assim.
-
 Qualquer dúvida ou sugestão, estamos à disposição,
 
 
    
     Comissão de Habitação (CoHab).
-	'''
+	'''.format(data=DATA_MAX_BOLETOS)
     return dever_boletos.format(**linha)
 
 
