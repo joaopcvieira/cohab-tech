@@ -52,6 +52,7 @@ def fix_number(number):
     :param number: The number to be fixed
     :return: A float
     """
+
     number = str(number)
     try:
         number = float(number.replace('.', '').replace(',', '.'))
