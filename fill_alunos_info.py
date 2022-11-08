@@ -1,289 +1,200 @@
 import pandas as pd
 import gspread
+import re
+from templates import *
+from presenca_ag import alunos_presentes_nas_ags
+from boletos_infos import boletos_infos
 import aux_funcs as aux
-import numpy as np
+from datetime import datetime, date
+
+CURRENT_YEAR = datetime.now().year
+TURMA_DE_BIXOS = int(str(CURRENT_YEAR + 4)[2:])  # em 2022 os bixos eram a T26
+PONTUACAO_BOLETOS = 0
+PONTUACAO_AG = 0.25
 
 sa = gspread.service_account(filename='credentials.json')
-
-sh = sa.open('H8 - 2022.2')
-
-pl_cohab = sh.worksheet('H8')
-
-# Get data from CoHab
-pl_cohab = sa.open('H8 - 2022.2').worksheet('H8 2022.2')
-
-df_cohab = pd.DataFrame(pl_cohab.get("A2:F"),
-                        columns=['ap_bloco', 'ap_numero', 'ap_vaga',
-                                 'nome', 'apelido', 'turma'
-                                 ])
-
-df_cohab.turma = df_cohab.turma.apply(lambda x: x[2:] if x else '')
-df_cohab.ap_bloco = df_cohab.ap_bloco.apply(lambda x: x[3:] if x else '')
-df_cohab = df_cohab.loc[df_cohab.turma.notna()]
-df_cohab = df_cohab.loc[df_cohab.turma != ""]
+sh = sa.open("Alunos db")
+ws = sh.worksheet("H8 2022")
 
 
-# Get data from Financeiro
-pl_financeiro = sa.open('Controle Mensalidade - Base de dados').worksheet('H8')
-pl_financeiro.get("A4:Q4")
-df_financeiro = pd.DataFrame(columns=pl_financeiro.get("A4:Q4")[0],
-                             data=pl_financeiro.get("A5:Q"))
-df_financeiro.rename(columns={
-    'NOME': 'nome',
-    'Apelido': 'apelido',
-    'T': 'turma',
-    'EMAIL1': 'email',
-    'Meses': 'meses_devendo',
-    'ALOJ': 'ap_bloco',
-    'APTO': 'ap_numero',
-    'VAGA': 'ap_vaga',
-    'CPF': 'cpf',
-    'CELULAR': 'celular',
-    'STATUS': 'status'
-}, inplace=True)
+def fix_number(num):
+    try:
+        return float(num)
+    except:
+        return aux.fix_number(num)
 
-df_financeiro.turma = df_financeiro.turma.apply(lambda x: x[2:] if x else '')
-df_financeiro.ap_bloco = df_financeiro.ap_bloco.apply(
-    lambda x: x[3:] if x else '')
-df_financeiro.celular = df_financeiro.celular.apply(aux.fix_cel)
-df_financeiro.cpf = df_financeiro.cpf.apply(aux.fix_cpf)
+def get_pontos_total(alunos: pd.DataFrame):
+    pontos_total = []
 
-df_financeiro = df_financeiro[[
-    'nome', 'apelido', 'turma',
-    'cpf', 'celular', 'email',
-    'ap_bloco', 'ap_numero', 'ap_vaga',
-    'meses_devendo', 'status'
-]]
+    for idx, linha in alunos.iterrows():
+        pt = 2
+        try:
+            pt += fix_number(linha.pontos_antigos)
+        except:
+            pass
+        try:
+            pt += fix_number(linha.pontos_boletos)
+        except:
+            pass
+        try:
+            pt += fix_number(linha.pontos_presenca)
+        except:
+            pass
+        try:
+            pt += fix_number(linha.pontos_iniciativas_I1_pontos)
+        except:
+            pass
+        try:
+            pt += fix_number(linha.pontos_iniciativas_I2_pontos)
+        except:
+            pass
+        try:
+            pt += fix_number(linha.pontos_iniciativas_I3_pontos)
+        except:
+            pass
+        try:
+            pt += fix_number(linha.pontos_extra)
+        except:
+            pass
 
-df_financeiro.dropna(subset='nome')
-df_financeiro = df_financeiro.loc[df_financeiro.nome.notna()]
-df_financeiro = df_financeiro.loc[df_financeiro.turma >= "22"]
-df_financeiro.reset_index(drop=True, inplace=True)
+        pontos_total.append(pt)
+    return pontos_total
 
+planilha_AG = sa.open('Presença na AG').worksheet("Geral")
 
-# Get data from Controle de Efetivo
-pl_controle_efetivo = sa.open(
-    "Controle de Efetivo das Iniciativas 2022.2").worksheet('summary_iniciativas')
-df_controle_efetivo = pd.DataFrame(columns=pl_controle_efetivo.get("B2:J2")[
-                                   0], data=pl_controle_efetivo.get("B3:J"))
+atributos = ['nome', 'apelido', 'turma', 'cpf',
+                'celular', 'email',
+                'ap_bloco', 'ap_numero', 'ap_vaga',
+                'pontos_total', 'pontos_antigos', 'pontos_presenca', 'pontos_boletos',
+                'pontos_iniciativas_I1_nome', 'pontos_iniciativas_I1_pontos',
+                'pontos_iniciativas_I2_nome', 'pontos_iniciativas_I2_pontos',
+                'pontos_iniciativas_I3_nome', 'pontos_iniciativas_I3_pontos',
+                'pontos_extra'
+                ]
+alunos = pd.DataFrame(columns=atributos, data=ws.get("A3:U"))
 
+# pegando as pontuações antigas
+ws_2021 = sa.open(
+    "Validação de Pontos - Cohab (respostas)").worksheet("Pontos 2.0")
+df_pontos_anteriores = pd.DataFrame(columns=ws_2021.get("A1:AH1")[
+                                    0], data=ws_2021.get("A2:AH"))
 
-df_cohab.fillna('', inplace=True)
-df_financeiro.fillna('', inplace=True)
-df_controle_efetivo.fillna('', inplace=True)
+df_pontos_anteriores = df_pontos_anteriores[['Nome', 'CPF', 'Total']]
+df_pontos_anteriores.rename(
+    columns={'Nome': 'nome', 'CPF':'cpf', 'Total': 'pontos_antigos'}, inplace=True)
+# df_pontos_anteriores['nome_join'] = df_pontos_anteriores['nome'].apply(
+#     aux.remove_accents_and_special_characters)
+    
+df_pontos_anteriores.pontos_antigos = df_pontos_anteriores.pontos_antigos.apply(aux.fix_number).astype(float)
+df_pontos_anteriores.cpf = df_pontos_anteriores.cpf.apply(aux.fix_cpf).astype(str)
 
-
-# # Check if aptos in cohab are the same as in financeiro
-# apto_adress_cohab = 'H8-' + df_cohab['ap_bloco'] + ' apto ' + \
-#     df_cohab['ap_numero'] + ' vaga ' + df_cohab['ap_vaga']
-# teste_cohab = pd.DataFrame(columns=['apelido', 'nome', 'turma', 'apto_adress_cohab'], data=zip(
-#     df_cohab['apelido'],  df_cohab['nome'], df_cohab['turma'], apto_adress_cohab))
-
-# temp_fiananceiro = df_financeiro  # .loc[df_financeiro.ap_bloco != '']
-# apto_adress_financeiro = 'H8-' + temp_fiananceiro['ap_bloco'] + ' apto ' + \
-#     temp_fiananceiro['ap_numero'] + ' vaga ' + temp_fiananceiro['ap_vaga']
-# teste_financeiro = pd.DataFrame(columns=['apelido', 'nome', 'turma', 'apto_adress_financeiro', 'statusfinanceiro'], data=zip(
-#     temp_fiananceiro['apelido'],  temp_fiananceiro['nome'], temp_fiananceiro['turma'], apto_adress_financeiro, temp_fiananceiro['status']))
-
-# teste_financeiro.sort_values(by='apto_adress_financeiro', inplace=True)
-# teste_cohab.sort_values(by='apto_adress_cohab', inplace=True)
-
-# df = pd.merge(teste_cohab, teste_financeiro, how='outer', left_on=[
-#               'apto_adress_cohab'], right_on=['apto_adress_financeiro'], suffixes=('_cohab', '_financeiro'))
-
-
-# certo = []
-# retios_name = []
-# retios_apelido = []
-# for idx, linha in df.iterrows():
-#     equivalent_name, ratio_name = aux.is_name_equivalent(
-#         f'{ linha.nome_cohab }', f'{linha.nome_financeiro}')
-#     equivalent_apelido, ratio_apelido = aux.is_name_equivalent(
-#         f'{linha.apelido_cohab}', f'{linha.apelido_financeiro}')
-#     if equivalent_name or equivalent_apelido:
-#         certo.append(True)
-#     else:
-#         certo.append(False)
-
-#     retios_name.append(ratio_name)
-#     retios_apelido.append(ratio_apelido)
-
-# df['check'] = certo
-# df['ratio_name'] = retios_name
-# df['ratio_apelido'] = retios_apelido
-# # df.loc[df.check == False]
-
-# # Check alunos that signed TVR and are in cohab
-# df_TVR = df_financeiro.loc[df_financeiro.status.str.contains('TVR')]
-# df_TVR
-
-# filter = []
-# status = []
-# nomes_TVR = df_TVR.nome.values
-# for idx, linha in df_cohab.iterrows():
-#     is_name, name = aux.is_name_in_list(f'{linha.nome}', nomes_TVR)
-#     if is_name:
-#         # print(f'{linha.apelido} - {linha.nome} - {linha.turma} - {linha.ap_bloco} - {linha.ap_numero} - {linha.ap_vaga}')
-#         filter.append(True)
-#         status.append(df_TVR.loc[df_TVR.nome == name].status.values[0])
-#     else:
-#         filter.append(False)
-
-# df_TVR = df_cohab.loc[filter]
-# df_TVR['status'] = status
+# Analisando os pontos de presença
+nomes_alunos_presentes = alunos_presentes_nas_ags().nome.apply(
+    aux.remove_accents_and_special_characters).values
+alunos['pontos_presenca'] = [PONTUACAO_AG if nome in nomes_alunos_presentes else
+                                0 for nome in alunos.nome.apply(
+                                    aux.remove_accents_and_special_characters).values]
 
 
-# Check alunos that signed TVR and are in cohab
-apto_adress_cohab = 'H8-' + df_cohab['ap_bloco'] + ' apto ' + \
-    df_cohab['ap_numero'] + ' vaga ' + df_cohab['ap_vaga']
-# teste_cohab = pd.DataFrame(columns=['apelido', 'nome', 'turma', 'apto_adress_cohab'], data=zip(df_cohab['apelido'],  df_cohab['nome'], df_cohab['turma'], apto_adress_cohab))
-df_cohab['apto_adress_cohab'] = apto_adress_cohab
+# Analisando os pontos de boletos
+boletos_df = boletos_infos()
+# Criando uma coluna temporária para a junção dos df
+boletos_df['nome_join'] = boletos_df.nome.apply(
+    aux.remove_accents_and_special_characters)
+alunos['nome_join'] = alunos.nome.apply(
+    aux.remove_accents_and_special_characters)
+alunos['cpf'] = alunos.cpf.apply(aux.fix_cpf).astype(str)
+df_pontos_anteriores['cpf'] = df_pontos_anteriores.cpf.apply(aux.fix_cpf).astype(str)
 
+alunos = pd.merge(
+    alunos, boletos_df[['nome_join', 'meses_devendo']], on='nome_join', how='left')
+    
+# alunos = pd.merge(alunos, df_pontos_anteriores, on='cpf', how='outer')
 
-temp_fiananceiro = df_financeiro.loc[df_financeiro.ap_bloco != '']
-apto_adress_financeiro = 'H8-' + temp_fiananceiro['ap_bloco'] + ' apto ' + \
-    temp_fiananceiro['ap_numero'] + ' vaga ' + temp_fiananceiro['ap_vaga']
-# teste_financeiro = pd.DataFrame(columns=['apelido', 'nome', 'turma', 'apto_adress_financeiro', 'status_financeiro'], data=zip(temp_fiananceiro['apelido'],  temp_fiananceiro['nome'], temp_fiananceiro['turma'], apto_adress_financeiro, temp_fiananceiro['status']))
+nomes_pontuacao_anterior = df_pontos_anteriores['nome'].values
+cpf_pontuacao_anterior = df_pontos_anteriores['cpf'].values
+pontos_antigos = list()
 
-df_financeiro['apto_adress_financeiro'] = apto_adress_financeiro
+for idx, linha in alunos.iterrows():
+    if linha.cpf in cpf_pontuacao_anterior:
+        pontos_antigos.append(
+            df_pontos_anteriores.loc[df_pontos_anteriores.cpf == linha.cpf, 'pontos_antigos'].values[0])
+        continue
+    
+    if linha.cpf in cpf_pontuacao_anterior:
+        print("PQP")
 
-df_financeiro.sort_values(by='apto_adress_financeiro', inplace=True)
-df_cohab.sort_values(by='apto_adress_cohab', inplace=True)
+    certainty, best_option = aux.is_name_in_list(
+        linha.nome, nomes_pontuacao_anterior)
 
-df_fin_e_cohab = pd.merge(df_cohab, df_financeiro, how='outer', left_on=[
-                          'apto_adress_cohab'], right_on=['apto_adress_financeiro'], suffixes=('_cohab', '_financeiro'))
-df_fin_e_cohab.dropna(subset=['apto_adress_cohab'], inplace=True)
-df_fin_e_cohab
-
-
-ratios_name = []
-ratios_apelido = []
-nomes_iniciativas = df_controle_efetivo.nome.values
-apelidos_iniciativas = df_controle_efetivo.apelido.values
-
-nome_iniciativas = list()
-apelido_iniciativas = list()
-pontos_iniciativas_I1_nome = list()
-pontos_iniciativas_I1_pontos = list()
-pontos_iniciativas_I2_nome = list()
-pontos_iniciativas_I2_pontos = list()
-pontos_iniciativas_I3_nome = list()
-pontos_iniciativas_I3_pontos = list()
-pontos_extra = list()
-
-for idx, linha in df_fin_e_cohab.iterrows():
-    is_equivalent_name, equivalent_name = aux.is_name_in_list(
-        f'{ linha.nome_cohab }', nomes_iniciativas)
-
-    is_equivalent_apelido, equivalent_apelido = aux.is_name_in_list(
-        f'{linha.apelido_cohab}', apelidos_iniciativas)
-
-    if is_equivalent_name:
-        pontos_iniciativas_I1_nome.append(
-            df_controle_efetivo.loc[df_controle_efetivo.nome == equivalent_name].pontos_iniciativas_I1_nome.values[0])
-        pontos_iniciativas_I1_pontos.append(
-            df_controle_efetivo.loc[df_controle_efetivo.nome == equivalent_name].pontos_iniciativas_I1_pontos.values[0])
-        pontos_iniciativas_I2_nome.append(
-            df_controle_efetivo.loc[df_controle_efetivo.nome == equivalent_name].pontos_iniciativas_I2_nome.values[0])
-        pontos_iniciativas_I2_pontos.append(
-            df_controle_efetivo.loc[df_controle_efetivo.nome == equivalent_name].pontos_iniciativas_I2_pontos.values[0])
-        pontos_iniciativas_I3_nome.append(
-            df_controle_efetivo.loc[df_controle_efetivo.nome == equivalent_name].pontos_iniciativas_I3_nome.values[0])
-        pontos_iniciativas_I3_pontos.append(
-            df_controle_efetivo.loc[df_controle_efetivo.nome == equivalent_name].pontos_iniciativas_I3_pontos.values[0])
-        pontos_extra.append(
-            df_controle_efetivo.loc[df_controle_efetivo.nome == equivalent_name].pontos_extra.values[0])
-
-    elif is_equivalent_apelido:
-        pontos_iniciativas_I1_nome.append(
-            df_controle_efetivo.loc[df_controle_efetivo.apelido == equivalent_apelido].pontos_iniciativas_I1_nome.values[0])
-        pontos_iniciativas_I1_pontos.append(
-            df_controle_efetivo.loc[df_controle_efetivo.apelido == equivalent_apelido].pontos_iniciativas_I1_pontos.values[0])
-        pontos_iniciativas_I2_nome.append(
-            df_controle_efetivo.loc[df_controle_efetivo.apelido == equivalent_apelido].pontos_iniciativas_I2_nome.values[0])
-        pontos_iniciativas_I2_pontos.append(
-            df_controle_efetivo.loc[df_controle_efetivo.apelido == equivalent_apelido].pontos_iniciativas_I2_pontos.values[0])
-        pontos_iniciativas_I3_nome.append(
-            df_controle_efetivo.loc[df_controle_efetivo.apelido == equivalent_apelido].pontos_iniciativas_I3_nome.values[0])
-        pontos_iniciativas_I3_pontos.append(
-            df_controle_efetivo.loc[df_controle_efetivo.apelido == equivalent_apelido].pontos_iniciativas_I3_pontos.values[0])
-        pontos_extra.append(
-            df_controle_efetivo.loc[df_controle_efetivo.apelido == equivalent_apelido].pontos_extra.values[0])
+    if certainty:
+        pontos_antigos.append(
+            df_pontos_anteriores.loc[df_pontos_anteriores.nome == best_option, 'pontos_antigos'].values[0])
 
     else:
-        pontos_iniciativas_I1_nome.append('')
-        pontos_iniciativas_I1_pontos.append('')
-        pontos_iniciativas_I2_nome.append('')
-        pontos_iniciativas_I2_pontos.append('')
-        pontos_iniciativas_I3_nome.append('')
-        pontos_iniciativas_I3_pontos.append('')
-        pontos_extra.append('')
+        pontos_antigos.append(0)
 
-    nome_iniciativas.append(equivalent_name)
-    apelido_iniciativas.append(equivalent_apelido)
+alunos['pontos_antigos'] = pontos_antigos
+alunos[['nome', 'apelido', 'cpf', 'turma', 'pontos_antigos']]
 
-    # ratios_name.append(ratio_name)
-    # ratios_apelido.append(ratio_apelido)
+alunos_esquisitos = df_pontos_anteriores.loc[df_pontos_anteriores.cpf.isin(alunos.cpf.values)]
+# alunos_esquisitos
+# pd.concat([alunos, alunos_esquisitos])
 
-df_fin_cohab_iniciativas = df_fin_e_cohab.copy()
-df_fin_cohab_iniciativas['nome_iniciativa'] = nome_iniciativas
-df_fin_cohab_iniciativas['apelido_iniciativa'] = apelido_iniciativas
-df_fin_cohab_iniciativas['pontos_iniciativas_I1_nome'] = pontos_iniciativas_I1_nome
-df_fin_cohab_iniciativas['pontos_iniciativas_I1_pontos'] = pontos_iniciativas_I1_pontos
-df_fin_cohab_iniciativas['pontos_iniciativas_I2_nome'] = pontos_iniciativas_I2_nome
-df_fin_cohab_iniciativas['pontos_iniciativas_I2_pontos'] = pontos_iniciativas_I2_pontos
-df_fin_cohab_iniciativas['pontos_iniciativas_I3_nome'] = pontos_iniciativas_I3_nome
-df_fin_cohab_iniciativas['pontos_iniciativas_I3_pontos'] = pontos_iniciativas_I3_pontos
-df_fin_cohab_iniciativas['pontos_extra'] = pontos_extra
+alunos.append(alunos_esquisitos)
 
-# Creating df_alunos_export
-cols_summary = [
+# alunos.loc[alunos.apelido.isna()]
+
+alunos.loc[(alunos.pontos_antigos == 0) &
+           (alunos.turma < '26'),
+           'pontos_antigos'
+           ] = alunos.loc[(alunos.pontos_antigos == 0) &
+                          (alunos.turma < '26')].apply(
+                            lambda x: 2*(TURMA_DE_BIXOS - int(x.turma)),  axis=1).values
+
+alunos.drop(columns=['nome_join'], inplace=True)
+
+# alunos.nome_x.fillna(alunos.no    me_y, inplace=True)
+
+
+alunos.rename(columns={
+    'nome_x': 'nome',
+    'cpf_x': 'cpf',
+    'pontos_antigos_y': 'pontos_antigos'
+    }, inplace=True)
+alunos['pontos_antigos'] = alunos.pontos_antigos.fillna(0)
+# alunos['pontos_antigos'] = alunos.pontos_antigos.apply(aux.fix_number)
+
+alunos = alunos[[
     'nome', 'apelido', 'turma', 'cpf', 'celular', 'email',
     'ap_bloco', 'ap_numero', 'ap_vaga',
-    'pontos_total', 'pontos_antigos',
-    'pontos_presenca', 'pontos_boletos',
+    'pontos_total', 'pontos_antigos', 'pontos_presenca', 'pontos_boletos',
     'pontos_iniciativas_I1_nome', 'pontos_iniciativas_I1_pontos',
     'pontos_iniciativas_I2_nome', 'pontos_iniciativas_I2_pontos',
     'pontos_iniciativas_I3_nome', 'pontos_iniciativas_I3_pontos',
     'pontos_extra', 'meses_devendo'
-]
+]]
 
-df_alunos_export = pd.DataFrame(columns=cols_summary)
-df_alunos_export['nome'] = df_fin_cohab_iniciativas['nome_cohab']
-df_alunos_export['apelido'] = df_fin_cohab_iniciativas['apelido_cohab']
-df_alunos_export['turma'] = df_fin_cohab_iniciativas['turma_cohab']
-df_alunos_export['cpf'] = df_fin_cohab_iniciativas['cpf']
-df_alunos_export['celular'] = df_fin_cohab_iniciativas['celular']
-df_alunos_export['email'] = df_fin_cohab_iniciativas['email']
-df_alunos_export['ap_bloco'] = df_fin_cohab_iniciativas['ap_bloco_cohab']
-df_alunos_export['ap_numero'] = df_fin_cohab_iniciativas['ap_numero_cohab']
-df_alunos_export['ap_vaga'] = df_fin_cohab_iniciativas['ap_vaga_cohab']
-# df_alunos_export['pontos_total']
-# df_alunos_export['pontos_antigos']
-# df_alunos_export['pontos_presenca']
-# df_alunos_export['pontos_boletos']
-df_alunos_export['pontos_iniciativas_I1_nome'] = df_fin_cohab_iniciativas['pontos_iniciativas_I1_nome']
-df_alunos_export['pontos_iniciativas_I1_pontos'] = df_fin_cohab_iniciativas['pontos_iniciativas_I1_pontos']
-df_alunos_export['pontos_iniciativas_I2_nome'] = df_fin_cohab_iniciativas['pontos_iniciativas_I2_nome']
-df_alunos_export['pontos_iniciativas_I2_pontos'] = df_fin_cohab_iniciativas['pontos_iniciativas_I2_pontos']
-df_alunos_export['pontos_iniciativas_I3_nome'] = df_fin_cohab_iniciativas['pontos_iniciativas_I3_nome']
-df_alunos_export['pontos_iniciativas_I3_pontos'] = df_fin_cohab_iniciativas['pontos_iniciativas_I3_pontos']
-df_alunos_export['pontos_extra'] = df_fin_cohab_iniciativas['pontos_extra'].fillna(0)
-df_alunos_export.pontos_extra.replace(to_replace='', value=0, inplace=True)
-
-df_alunos_export.head()
+alunos = alunos.fillna('-')
 
 
-df_alunos_export.columns
 
-df_alunos_export.fillna('', inplace=True)
-df_alunos_export.sort_values(by=['nome'], inplace=True)
+alunos['pontos_presenca'] = alunos['pontos_presenca'].apply(fix_number)
+alunos['pontos_iniciativas_I1_pontos'] = alunos['pontos_iniciativas_I1_pontos'].apply(fix_number)
+alunos['pontos_iniciativas_I2_pontos'] = alunos['pontos_iniciativas_I2_pontos'].apply(fix_number)
+alunos['pontos_iniciativas_I3_pontos'] = alunos['pontos_iniciativas_I3_pontos'].apply(fix_number)
+alunos['pontos_extra'] = alunos['pontos_extra'].apply(fix_number)
 
-sh = sa.open('Alunos db')
-export = sh.worksheet('H8 2022')
-export.clear()
+alunos['pontos_boletos'] = [PONTUACAO_BOLETOS if devendo ==
+                            '-' else 0 for devendo in alunos.meses_devendo.values]
+
+alunos['pontos_total'] = get_pontos_total(alunos)
+
+ws_export = sh.worksheet("H8 + info boletos")
 
 i = 2
-export.update('A1', 'Banco de Dados de Alunos - H8 2022')
-export.update(f"A{i}:U", [
-              df_alunos_export.columns.values.tolist()] + df_alunos_export.values.tolist())
+ws_export.clear()
+ws_export.update('A1', 'Banco de Dados de Alunos + info boletos - H8 2022 - atualizado em ' +
+                    datetime.strftime(datetime.now(), "%d/%m/%Y"))
+ws_export.update(f"A{i}:U", [
+    alunos.columns.values.tolist()] + alunos.values.tolist())
