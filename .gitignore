@@ -7,3 +7,4 @@ credentials.json
 *.txt
 *.ipynb
 .vscode/
+not_used/*
