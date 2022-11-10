@@ -17,8 +17,9 @@ def alunos_presentes_nas_ags() -> pd.DataFrame:
     presenca_AG.drop('y', axis=1, inplace=True)
 
     presenca_AG = presenca_AG.loc[(presenca_AG['26/05'] == 'TRUE') &
-                                  (presenca_AG['20/06'] == 'TRUE') &
-                                  (presenca_AG['08/09'] == 'TRUE')]
+                                  (presenca_AG['20/06'] == 'TRUE') ]
     return presenca_AG
 
-# print(alunos_presentes_nas_ags().head())
+# df = alunos_presentes_nas_ags()
+# print(df.loc[df.apelido == "Polly"])
+
