@@ -104,45 +104,51 @@ Seus pontos foram validados com sucesso! Você apresentou no final, um total de 
 
 Segue abaixo a divisão e origem dessa pontuação: '''.format(**linha)
 
-    if(linha.pontos_antigos != 0 and linha.pontos_antigos != None):
+    if(linha.pontos_antigos != 0 and linha.pontos_antigos != '0' and linha.pontos_antigos != None):
         validacao_pontos += '''
-        Pontuação Anterior ao ano corrente: {pontos_antigos}'''.format(**linha)
+    Pontuação Anterior ao ano corrente: {pontos_antigos}
+        '''.format(**linha)
     
-    if(linha.pontos_presenca != 0 and linha.pontos_presenca != None):
+    if(linha.pontos_presenca != 0 and linha.pontos_presenca != '0' and linha.pontos_presenca != None):
         validacao_pontos += '''
-        Presença em AG's: {pontos_presenca}'''.format(**linha)
+    Presença em AG's: {pontos_presenca}
+        '''.format(**linha)
 
-    if(linha.pontos_boletos != 0 and linha.pontos_boletos != None):
+    if(linha.pontos_boletos != 0 and linha.pontos_boletos != '0' and linha.pontos_boletos != None):
         validacao_pontos += '''
-        Boletos pagos: {pontos_boletos}'''.format(**linha)
+        Pontuação por adimplência + anuidade paga: {pontos_boletos}'''.format(**linha)
 
-    if(linha.pontos_iniciativas_I1_pontos != 0 and linha.pontos_iniciativas_I1_pontos != None):
+    if(linha.pontos_iniciativas_I1_pontos != 0 and linha.pontos_iniciativas_I1_pontos != '0' and linha.pontos_iniciativas_I1_pontos != None):
         validacao_pontos += '''
 
     Iniciativas 
 
-    {pontos_iniciativas_I1_nome}:
-    Correspondentes a um total de {pontos_iniciativas_I1_pontos} pontos.'''.format(**linha)
+    {pontos_iniciativas_I1_nome}: {pontos_iniciativas_I1_pontos} pontos.'''.format(**linha)
 
-    if(linha.pontos_iniciativas_I2_pontos != 0 and linha.pontos_iniciativas_I2_pontos != None):
-        validacao_pontos += '''
-    {pontos_iniciativas_I2_nome}:
-    Correspondentes a um total de {pontos_iniciativas_I2_pontos} pontos.'''.format(**linha)
-
-    if(linha.pontos_iniciativas_I3_pontos != 0 and linha.pontos_iniciativas_I3_pontos != None):
+    if(linha.pontos_iniciativas_I2_pontos != 0 and linha.pontos_iniciativas_I2_pontos != '0' and linha.pontos_iniciativas_I2_pontos != None):
         validacao_pontos += '''
 
-    {pontos_iniciativas_I3_nome}:
-    Correspondentes a um total de {pontos_iniciativas_I3_pontos} pontos.'''.format(**linha)
+    {pontos_iniciativas_I2_nome}: {pontos_iniciativas_I2_pontos} pontos.'''.format(**linha)
 
-    if(linha.pontos_extra != 0 and linha.pontos_extra != None):
+    if(linha.pontos_iniciativas_I3_pontos != 0 and linha.pontos_iniciativas_I3_pontos != '0' and linha.pontos_iniciativas_I3_pontos != None):
         validacao_pontos += '''
-        Pontuação Extra: {pontos_extra} pontos.'''.format(**linha)
+
+    {pontos_iniciativas_I3_nome}: {pontos_iniciativas_I3_pontos} pontos.
+    '''.format(**linha)
+
+    if(linha.pontos_extra != 0 and linha.pontos_extra != '0' and linha.pontos_extra != None):
+        validacao_pontos += '''
+        
+    Pontuação Extra: {pontos_extra} pontos.
+    Pontuação extra inclui pontuação da CR 26, representantes e outros, caso se aplique.
+'''.format(**linha)
 
     validacao_pontos += '''
-    Qualquer dúvida ou sugestão a respeito da validação dos pontos, estamos à disposição,
 
-    Comissão de Habitação (CoHab).
+Qualquer dúvida ou sugestão a respeito da validação dos pontos, estamos à disposição,
+
+    Silveirinha T-25
+    Casd.
  '''
     return validacao_pontos
 

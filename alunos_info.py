@@ -9,7 +9,7 @@ from datetime import datetime, date
 import numpy as np
 
 
-PONTUACAO_BOLETOS = 1
+PONTUACAO_BOLETOS = 0
 PONTUACAO_AG = 0.25
 
 
