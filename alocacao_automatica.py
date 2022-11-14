@@ -275,37 +275,33 @@ def run_postulacao_sozinhos(sozinho_df: pd.DataFrame) -> tuple:
 
     return sozinho_df, alunos_duplas
 
+if __name__ == "__main__":
+    sa = gspread.service_account(filename='credentials.json')
+    postulacao = sa.open("Respostas Postulação Cohab 2022.2")
+    sozinho = postulacao.worksheet("1_pessoa").get_all_values()
+    dupla = postulacao.worksheet("2_pessoas").get_all_values()
+    quarteto = postulacao.worksheet("4_pessoas").get_all_values()
+    sexteto = postulacao.worksheet("6_pessoas").get_all_values()
 
-sa = gspread.service_account(filename='credentials.json')
-postulacao = sa.open("Respostas Postulação Cohab 2022.2")
-sozinho = postulacao.worksheet("1_pessoa").get_all_values()
-dupla = postulacao.worksheet("2_pessoas").get_all_values()
-quarteto = postulacao.worksheet("4_pessoas").get_all_values()
-sexteto = postulacao.worksheet("6_pessoas").get_all_values()
+    sozinho_df = fix_df(pd.DataFrame(sozinho[1:], columns=sozinho[0]), 1)
+    dupla_df = fix_df(pd.DataFrame(dupla[1:], columns=dupla[0]), 2)
+    quarteto_df = fix_df(pd.DataFrame(quarteto[ 1:], columns=quarteto[0]), 4)
+    sexteto_df = fix_df(pd.DataFrame(sexteto[1:], columns=sexteto[0]), 6)
 
-sozinho_df = fix_df(pd.DataFrame(sozinho[1:], columns=sozinho[0]), 1)
-dupla_df = fix_df(pd.DataFrame(dupla[1:], columns=dupla[0]), 2)
-quarteto_df = fix_df(pd.DataFrame(quarteto[ 1:], columns=quarteto[0]), 4)
-sexteto_df = fix_df(pd.DataFrame(sexteto[1:], columns=sexteto[0]), 6)
+    sozinho_df = get_pontuacao_por_ap(sozinho_df, 1)
+    sozinho_df = sozinho_df.reset_index(drop=True)
 
-sozinho_df = get_pontuacao_por_ap(sozinho_df, 1)
-sozinho_df = sozinho_df.reset_index(drop=True)
+    dupla_df = get_pontuacao_por_ap(dupla_df, 2)
+    dupla_df = dupla_df.reset_index(drop=True)
 
-dupla_df = get_pontuacao_por_ap(dupla_df, 2)
-dupla_df = dupla_df.reset_index(drop=True)
-
-vagas = get_vagas_disponiveis()
-vagas_2 = vagas[vagas.vagas_por_ap >= 2]
-
-
-alunos_tout = get_students_info()
+    vagas = get_vagas_disponiveis()
+    vagas_2 = vagas[vagas.vagas_por_ap >= 2]
 
 
-# run_postulacao_duplas(dupla_df)
-run_postulacao_sozinhos(sozinho_df)
-
-pass
+    alunos_tout = get_students_info()
 
 
+    # run_postulacao_duplas(dupla_df)
+    run_postulacao_sozinhos(sozinho_df)
 
-
+    pass
