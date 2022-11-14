@@ -34,11 +34,13 @@ def fix_cpf(cpf):
     :return: the cpf variable.
     """
     cpf = str(cpf)
-    cpf = cpf.replace('.', '').replace('-', '').replace(' ', '')
+    cpf = cpf.replace('.', '').replace('-', '').replace(' ', '').replace("'", "")
     if(len(cpf) == 11):
         return cpf
     elif(len(cpf) == 10):
         return '0' + cpf
+    elif(len(cpf) == 9):
+        return '00' + cpf
     else:
         return "ERRO CPF INVALIDO"
 
