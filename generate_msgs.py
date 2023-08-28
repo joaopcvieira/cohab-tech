@@ -22,10 +22,10 @@ def main():
     mensagens = list()
     for idx, linha in alunos.iterrows():
         if linha.meses_devendo != '-':
-            mensagens.append("")    
-            # mensagens.append(msg_dever_boletos_sheets(linha))
+            mensagens.append(msg_dever_boletos_sheets(linha))
         else:
-            mensagens.append(msg_validacao_pontos_sheets(linha))
+            # mensagens.append(msg_validacao_pontos_sheets(linha))
+            mensagens.append("")    
             
 
     alunos_info.update_mnsg_sheets_manual_check(np.array([mensagens]))
